@@ -1,106 +1,88 @@
-## Student
-- Name: Лендєл Е.Т
+! # Student
+- Name: Лендєл Е.Т.
 - Group: 232.2 он
 
-## Практичне заняття №5 — JWT Authentication + Guards + RBAC
+## Практичні заняття №5 та №6 — MiniShop API (JWT + RBAC + Swagger + Interceptors)
+
+### Опис проекту
+MiniShop API — це сервіс для управління інтернет-магазином, що включає систему автентифікації, розмежування прав доступу (адмін/користувач), стандартизовану обробку відповідей та автоматичну документацію.
+
+---
 
 ### Структура репозиторію
-```text
+``` ``` 
 .
 ├── src/
-│   ├── auth/
-│   │   ├── dto/
-│   │   │   ├── register.dto.ts
-│   │   │   └── login.dto.ts
-│   │   ├── auth.module.ts
-│   │   ├── auth.service.ts
-│   │   └── auth.controller.ts
-│   ├── users/
-│   │   ├── user.entity.ts
-│   │   ├── users.module.ts
-│   │   └── users.service.ts
+│   ├── auth/ 
+│   ├── categories/
+│   ├── products/
 │   ├── common/
-│   │   ├── enums/
-│   │   │   └── role.enum.ts
-│   │   ├── guards/
-│   │   │   ├── jwt-auth.guard.ts
-│   │   │   └── roles.guard.ts
-│   │   ├── decorators/
-│   │   │   ├── current-user.decorator.ts
-│   │   │   └── roles.decorator.ts
-│   │   └── pipes/
-│   │       └── trim.pipe.ts
-│   ├── categories/ ...
-│   ├── products/ ...
-│   ├── migrations/
-│   ├── data-source.ts
+│   │   ├── interceptors/
+│   │   │   ├── logging.interceptor.ts
+│   │   │   └── transform.interceptor.ts
+│   │   ├── filters/
+│   │   │   └── http-exception.filter.ts
+│   │   └── guards/ & decorators/
 │   ├── main.ts
 │   └── app.module.ts
+├── swagger-screenshot.png
 ├── Dockerfile
 ├── docker-compose.yml
 └── README.md
-```
+``` ``` 
+
+---
 
 ### Запуск проекту
-```bash
+``` ``` ```bash
 cp .env.example .env
 docker compose up --build
-```
+``` ``` ```
 
-### API Endpoints
-| Method | URL | Auth | Role |
-|--------|-----|------|------|
-| POST | /auth/register | - | - |
-| POST | /auth/login | - | - |
-| GET | /api/categories | - | - |
-| POST | /api/categories | JWT | admin |
-| GET | /api/products | - | - |
-| POST | /api/products | JWT | admin |
-| PATCH | /api/products/:id | JWT | admin |
-| DELETE | /api/products/:id | JWT | admin |
+---
 
-### Тест реєстрації
-```json
+### Swagger UI (Документація API)
+Документація доступна за адресою: http://localhost:3000/api/docs
+
+![Swagger UI](swagger-screenshot.png)
+
+---
+
+### API Ендпоінти
+| Метод  | URL               | Опис                           | Доступ |
+|--------|-------------------|--------------------------------|--------|
+| POST   | /auth/register    | Реєстрація користувача         | Публічний|
+| POST   | /auth/login       | Авторизація (отримання JWT)    | Публічний|
+| GET    | /api/products     | Отримати список товарів        | Публічний|
+| POST   | /api/products     | Створити товар                 | Admin|
+| GET    | /api/categories   | Отримати категорії             | Публічний|
+| POST   | /api/categories   | Створити категорію             | Admin|
+
+---
+
+### Результати тестування
+
+#### 1. Формат успішної відповіді (TransformInterceptor)
+``` ``` json
 {
-  "email": "user@test.com",
-  "name": "Test User",
-  "role": "user",
-  "id": 2,
-  "createdAt": "2026-04-30T18:00:00.000Z"
+  "data": { ... },
+  "statusCode": 200,
+  "timestamp": "2026-05-06T17:00:00.000Z"
 }
-```
+``` ``` 
 
-### Тест логіну
-```json
+### 2. Формат помилки (HttpExceptionFilter)
+``` ``` json
 {
-  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiYWRtaW5AdGVzdC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MTQ1..."
+  "error": {
+    "code": 400,
+    "message": "Validation failed",
+    "traceId": "a1b2c3d4-e5f6..."
+  },
+  "timestamp": "2026-05-06T17:05:00.000Z"
 }
-```
+``` ``` ```
 
-### Тест 401 — запит без токена
-```json
-{
-  "message": "Missing authorization token",
-  "error": "Unauthorized",
-  "statusCode": 401
-}
-```
-
-### Тест 403 — запит з роллю user
-```json
-{
-  "message": "Insufficient permissions",
-  "error": "Forbidden",
-  "statusCode": 403
-}
-```
-
-### Тест успішного створення від admin
-```json
-{
-  "id": 1,
-  "name": "MacBook Pro",
-  "price": 2499.99,
-  "stock": 10
-}
-```
+#### 3. Логування (LoggingInterceptor)
+Кожен запит логується в консоль Docker:
+`LOG [HTTP] GET /api/products — 200 — 15ms`.
